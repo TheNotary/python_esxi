@@ -22,13 +22,13 @@ esxi_vsphere_server, esxi_user, esxi_pass = lookup_env_variables()
 
 
 def main():
-    list_vms()
-    # list_vswitch_info()
+    # list_vms()
+    list_vswitch_info()
 
 
 def list_vms():
     my_cluster = vm_util.connect()
-    # import pdb; pdb.set_trace()
+    # pdb.set_trace()
 
     content = my_cluster.RetrieveContent()
     for child in content.rootFolder.childEntity:
@@ -39,8 +39,9 @@ def list_vms():
             for vm in vmList:
                 esxi_printer.PrintVmInfo(vm)
 
-    vm_util.disconnect(my_cluster)
     print("Total VMs: {}".format(len(vmList)))
+    vm_util.disconnect(my_cluster)
+    # return len(vmList)
 
 
 def list_vswitch_info():
@@ -51,11 +52,15 @@ def list_vswitch_info():
     hosts = vm_util.GetVMHosts(content)
     hostSwitchesDict = vm_util.GetHostsSwitches(hosts)
 
-    for host, vswithes in hostSwitchesDict.items():
-        for v in vswithes:
-            print_switch_info(v)
+    vswitch_count = 0
+    for host, vswitches in hostSwitchesDict.items():
+        for vswitch in vswitches:
+            vswitch_count += 1
+            esxi_printer.print_switch_info(vswitch)
 
     vm_util.disconnect(my_cluster)
+    print( "Total number of switches:  {}".format(vswitch_count) )
+    return vswitch_count
 
 
 if __name__ == "__main__":

@@ -43,3 +43,17 @@ def PrintVmInfo(vm, depth=1):
         print("Question  : ", summary.runtime.question.text)
         print("")
     print("")
+
+def print_switch_info(switch):
+    """
+    Pass in a switch and all of it's Port Groups and Uplinks will be printed.
+    """
+    print(switch.name)
+    print("  Port Groups:")
+    for grp in tuple(switch.portgroup):
+        print("    " + grp)
+
+    print("  Uplinks")
+    for pnic in tuple(switch.pnic):
+        print("    " + pnic)
+    print("")
