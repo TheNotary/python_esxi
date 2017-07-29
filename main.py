@@ -12,7 +12,8 @@ def main():
 
     my_cluster = connect.ConnectNoSSL(esxi_vsphere_server, 443, esxi_user, esxi_pass)
 
-    list_vms(my_cluster)
+    #list_vms(my_cluster)
+    list_vswitch_info(my_cluster)
 
     connect.Disconnect(my_cluster)
 
@@ -26,7 +27,10 @@ def lookup_env_variables():
         exc_info = sys.exc_info()
         print("Error:  Missing env variable '{}'".format(exc_info[1].message))
         sys.exit()
+        # Debugging
         #import pdb; pdb.set_trace()
+        # type 'list' to see
+        # dir() and dict() are helpful
         #traceback.print_exception(*exc_info)
     return [esxi_vsphere_server, esxi_user, esxi_pass]
 
@@ -84,6 +88,42 @@ def PrintVmInfo(vm, depth=1):
         print("Question  : ", summary.runtime.question.text)
         print("")
     print("")
+
+
+def GetVMHosts(content):
+    host_view = content.viewManager.CreateContainerView(content.rootFolder,
+                                                        [vim.HostSystem],
+                                                        True)
+    obj = [host for host in host_view.view]
+    host_view.Destroy()
+    return obj
+
+
+def GetHostsSwitches(hosts):
+    hostSwitchesDict = {}
+    for host in hosts:
+        switches = host.config.network.vswitch
+        hostSwitchesDict[host] = switches
+    return hostSwitchesDict
+
+
+def print_switch_info(switch):
+    print(switch.name)
+    for grp in tuple(switch.portgroup):
+        print("  " + grp)
+
+
+
+def list_vswitch_info(my_cluster):
+    content = my_cluster.RetrieveContent()
+
+    hosts = GetVMHosts(content)
+    hostSwitchesDict = GetHostsSwitches(hosts)
+
+    for host, vswithes in hostSwitchesDict.items():
+        for v in vswithes:
+            print_switch_info(v)
+            import pdb; pdb.set_trace()
 
 
 main()
