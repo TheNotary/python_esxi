@@ -32,7 +32,6 @@ def lookup_env_variables():
 
 
 def list_vms(my_cluster):
-    #searcher = my_cluster.content.searchIndex
     content = my_cluster.RetrieveContent()
     for child in content.rootFolder.childEntity:
         if hasattr(child, 'vmFolder'):
@@ -41,8 +40,8 @@ def list_vms(my_cluster):
             vmList = vmFolder.childEntity
             for vm in vmList:
                 PrintVmInfo(vm)
-    print("finished")
     return 0
+
 
 def PrintVmInfo(vm, depth=1):
     """
@@ -70,22 +69,21 @@ def PrintVmInfo(vm, depth=1):
         return
 
     summary = vm.summary
-    print("Name       : ", summary.config.name)
-    print("Path       : ", summary.config.vmPathName)
-    print("Guest      : ", summary.config.guestFullName)
+    print("Name: {}".format(summary.config.name))
+    print("  Path: {}".format(summary.config.vmPathName))
+    print("  Guest: {}".format(summary.config.guestFullName))
     annotation = summary.config.annotation
     if annotation != None and annotation != "":
-        print("Annotation : ", annotation)
-    print("State      : ", summary.runtime.powerState)
+        print("Annotation : {}".format(annotation))
+    print("  State: {}".format(summary.runtime.powerState))
     if summary.guest != None:
         ip = summary.guest.ipAddress
         if ip != None and ip != "":
-            print("IP         : ", ip)
+            print("  IP: {}".format(ip))
     if summary.runtime.question != None:
         print("Question  : ", summary.runtime.question.text)
         print("")
-
-
+    print("")
 
 
 main()
