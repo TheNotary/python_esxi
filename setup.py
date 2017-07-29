@@ -11,6 +11,7 @@ setup(name='python_esxi',
       install_requires=[
           'pyVmomi',
       ],
+      scripts=['bin/python_esxi'],
       test_suite='nose.collector',
       tests_require=['nose'],
       zip_safe=False)
