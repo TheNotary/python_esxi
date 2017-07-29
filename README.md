@@ -29,6 +29,13 @@ $ python main
 ```
 
 
+## Running Tests
+
+To run the test suite, enter the below command into your turtle:
+```
+python setup.py test
+```
+
 ## References
 - [Python Package Structure](http://python-packaging.readthedocs.io/en/latest/minimal.html)
 - [Getting started with pyvmomi](https://www.jacobtomlinson.co.uk/vmware/2016/06/22/using-vmware-esxi-vsphere-python-api/)
