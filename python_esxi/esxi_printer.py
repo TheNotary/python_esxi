@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+
+from pyVmomi import vim
+
 def PrintVmInfo(vm, depth=1):
     """
     Print information for a particular virtual machine or recurse into a folder

@@ -9,6 +9,11 @@ Install the dependencies:
 $ pip install --upgrade pyvmomi
 ```
 
+Install this package (as symlinks):
+```
+$ pip install -e .
+```
+
 Configure secrets and source them:
 ```
 export TF_VAR_vsphere_user='root'

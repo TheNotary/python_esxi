@@ -11,18 +11,25 @@ import vm_util
 import esxi_printer
 from network import *
 
+# Debug:
+"""
+from python_esxi import *
+list_vms()
+list_vswitch_info()
+"""
+
+esxi_vsphere_server, esxi_user, esxi_pass = lookup_env_variables()
+
+
 def main():
-    esxi_vsphere_server, esxi_user, esxi_pass = lookup_env_variables()
-
-    my_cluster = connect.ConnectNoSSL(esxi_vsphere_server, 443, esxi_user, esxi_pass)
-
-    #list_vms(my_cluster)
-    list_vswitch_info(my_cluster)
-
-    connect.Disconnect(my_cluster)
+    list_vms()
+    # list_vswitch_info()
 
 
-def list_vms(my_cluster):
+def list_vms():
+    my_cluster = vm_util.connect()
+    # import pdb; pdb.set_trace()
+
     content = my_cluster.RetrieveContent()
     for child in content.rootFolder.childEntity:
         if hasattr(child, 'vmFolder'):
@@ -31,10 +38,14 @@ def list_vms(my_cluster):
             vmList = vmFolder.childEntity
             for vm in vmList:
                 esxi_printer.PrintVmInfo(vm)
-    return 0
+
+    vm_util.disconnect(my_cluster)
+    print("Total VMs: {}".format(len(vmList)))
 
 
-def list_vswitch_info(my_cluster):
+def list_vswitch_info():
+    my_cluster = vm_util.connect()
+
     content = my_cluster.RetrieveContent()
 
     hosts = vm_util.GetVMHosts(content)
@@ -43,7 +54,9 @@ def list_vswitch_info(my_cluster):
     for host, vswithes in hostSwitchesDict.items():
         for v in vswithes:
             print_switch_info(v)
-            # import pdb; pdb.set_trace()
+
+    vm_util.disconnect(my_cluster)
 
 
-main()
+if __name__ == "__main__":
+    main()
