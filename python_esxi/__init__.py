@@ -9,7 +9,8 @@ from pyVmomi import vim
 from config_helper import lookup_env_variables
 import vm_util
 import esxi_printer
-from network import *
+from network import bootstrap_esxi_network_configs
+from users import create_users, list_users
 
 # Debug:
 """
@@ -22,8 +23,13 @@ esxi_vsphere_server, esxi_user, esxi_pass = lookup_env_variables()
 
 
 def main():
+    my_cluster = vm_util.connect()
+
+    create_users(my_cluster)
+    # bootstrap_esxi_network_configs()
     # list_vms()
-    list_vswitch_info()
+    # list_vswitch_info()
+    # list_users(my_cluster)
 
 
 def list_vms():
