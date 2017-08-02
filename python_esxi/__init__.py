@@ -27,13 +27,14 @@ def main():
 
     create_users(my_cluster)
     # bootstrap_esxi_network_configs()
-    # list_vms()
-    # list_vswitch_info()
+    # list_vms(my_cluster)
+    list_vswitch_info(my_cluster)
     # list_users(my_cluster)
 
+    vm_util.disconnect(my_cluster)
 
-def list_vms():
-    my_cluster = vm_util.connect()
+
+def list_vms(my_cluster):
     # pdb.set_trace()
 
     content = my_cluster.RetrieveContent()
@@ -46,13 +47,10 @@ def list_vms():
                 esxi_printer.PrintVmInfo(vm)
 
     print("Total VMs: {}".format(len(vmList)))
-    vm_util.disconnect(my_cluster)
     # return len(vmList)
 
 
-def list_vswitch_info():
-    my_cluster = vm_util.connect()
-
+def list_vswitch_info(my_cluster):
     content = my_cluster.RetrieveContent()
 
     hosts = vm_util.GetVMHosts(content)
@@ -64,7 +62,6 @@ def list_vswitch_info():
             vswitch_count += 1
             esxi_printer.print_switch_info(vswitch)
 
-    vm_util.disconnect(my_cluster)
     print( "Total number of switches:  {}".format(vswitch_count) )
     return vswitch_count
 
