@@ -32,10 +32,10 @@ def main():
     # create_users(my_cluster)
     # list_users(my_cluster)
 
-    # set_advanced_configs(my_cluster)
     # bootstrap_esxi_network_configs()
 
     # FINISHED:
+    # general_system.set_advanced_configs(my_cluster)
     # general_system.check_for_ssh(esxi_vsphere_server)
     # general_system.list_license_info(my_cluster)
     # general_system.print_uptime(my_cluster)
@@ -46,24 +46,7 @@ def main():
     vm_util.disconnect(my_cluster)
 
 
-def set_advanced_configs(service_instance):
-    """
-    Sets advanced configs like hostname, etc.
-    """
 
-    content = service_instance.RetrieveContent()
-
-    host_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.HostSystem], True)
-    pdb.set_trace()
-
-    host = host_view.view[0]
-    option_manager = host.configManager.advancedOption
-
-    option = vim.option.OptionValue(key = "Net.GuestIPHack", value=long(1))
-    optionManager.UpdateOptions(changedValue=[option])
-
-    # Setup SSH
-    service_instance.content.serviceManager.QueryServiceList(location=["localhost.Home"])
 
 
 def list_vms(my_cluster):

@@ -4,6 +4,23 @@ import pyVim
 from pyVmomi import vim
 
 
+def set_advanced_configs(service_instance):
+    """
+    Sets advanced configs like hostname, etc.
+    """
+
+    content = service_instance.RetrieveContent()
+
+    host_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.HostSystem], True)
+
+    host = host_view.view[0]
+    option_manager = host.configManager.advancedOption
+
+    # pdb.set_trace()
+    option = vim.option.OptionValue(key = "Net.GuestIPHack", value=long(1))
+    option_manager.UpdateOptions(changedValue=[option])
+
+
 def list_license_info(my_cluster):
     lm = my_cluster.RetrieveContent().licenseManager
 
