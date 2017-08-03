@@ -3,6 +3,7 @@
 import pyVim
 from pyVmomi import vim
 
+
 def list_license_info(my_cluster):
     lm = my_cluster.RetrieveContent().licenseManager
 
@@ -19,6 +20,23 @@ def print_uptime(my_cluster):
     content = my_cluster.RetrieveContent()
     host_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.HostSystem], True)
 
+    # host_view.view[0]
     for host in host_view.view:
         seconds = host.RetrieveHardwareUptime()
         print("Uptime: {} hours".format(seconds/60.0/60.0) )
+
+
+import socket
+def check_for_ssh(esxi_vsphere_server):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(2)
+    try:
+        s.connect((esxi_vsphere_server, 22))
+        print "SSH is enabled"
+        s.close()
+        return True
+    except socket.error as e:
+        print( "Connection on port 22 to {} failed {}".format(esxi_vsphere_server, e) )
+        print("WARNING:\nWARNING:  You'll need to login to the ESXi server, right click the Host -> Services -> Enable Secure Shell\nWARNING:")
+        s.close()
+        return False
