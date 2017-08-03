@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pdb
 import os
 import sys
@@ -9,6 +11,7 @@ from pyVmomi import vim
 from config_helper import lookup_env_variables
 import vm_util
 import esxi_printer
+import general_system
 from network import bootstrap_esxi_network_configs
 from users import create_users, list_users
 
@@ -24,18 +27,29 @@ esxi_vsphere_server, esxi_user, esxi_pass = lookup_env_variables()
 
 def main():
     my_cluster = vm_util.connect()
+    # pdb.set_trace()
 
-    create_users(my_cluster)
-    # bootstrap_esxi_network_configs()
-    # list_vms(my_cluster)
-    list_vswitch_info(my_cluster)
+    # create_users(my_cluster)
     # list_users(my_cluster)
+
+    # set_advanced_configs()
+    general_system.list_license_info(my_cluster)
+    general_system.print_uptime(my_cluster)
+
+    # bootstrap_esxi_network_configs()
+    # list_vswitch_info(my_cluster)
+    # list_vms(my_cluster)
 
     vm_util.disconnect(my_cluster)
 
 
+def set_advanced_configs(my_cluster):
+    """
+    Sets advanced configs like hostname, etc.
+    """
+
+
 def list_vms(my_cluster):
-    # pdb.set_trace()
 
     content = my_cluster.RetrieveContent()
     for child in content.rootFolder.childEntity:
