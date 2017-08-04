@@ -5,6 +5,7 @@ import os
 import sys
 import traceback
 
+import paramiko
 from pyVim import connect
 from pyVmomi import vim
 
@@ -32,7 +33,7 @@ def main():
     # create_users(my_cluster)
     # list_users(my_cluster)
 
-    # bootstrap_esxi_network_configs()
+    bootstrap_esxi_network_configs(my_cluster)
 
     # FINISHED:
     # general_system.set_advanced_configs(my_cluster)

@@ -10,6 +10,8 @@ setup(name='python_esxi',
       packages=['python_esxi'],
       install_requires=[
           'pyVmomi',
+          'paramiko==2.2.1',
+          'pyOpenSSL==16.2.0',
       ],
       scripts=['bin/python_esxi'],
       test_suite='nose.collector',
