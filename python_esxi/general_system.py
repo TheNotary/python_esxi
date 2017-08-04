@@ -29,7 +29,7 @@ def list_license_info(my_cluster):
         print("WARNING:\nWARNING:  Your server is still in evaluation mode and needs you to manually login and fill in the free esxi key.\nWARNING:")
         return False
     else:
-        print( "Detected License '{}' ".format(license_name) )
+        print( u'\u2714' + " License detected '{}' ".format(license_name) )
         return True
 
 
@@ -49,7 +49,7 @@ def check_for_ssh(esxi_vsphere_server):
     s.settimeout(2)
     try:
         s.connect((esxi_vsphere_server, 22))
-        print "SSH is enabled"
+        print( u'\u2714' + " SSH is enabled" )
         s.close()
         return True
     except socket.error as e:

@@ -42,7 +42,7 @@ def install_firewall_rule():
         upload_firewall_xml_to_server(service_xml_file)
         swap_in_new_firewall_file(ssh)
     else:
-        print("Firewall rule for VNC already installed.")
+        print(u'\u2714' + " Firewall rule for VNC already installed.")
 
     ssh.close()
 
@@ -82,7 +82,6 @@ def get_firewall_xml_from_server(ssh):
     cmd_to_execute = """
         cat /etc/vmware/firewall/service.xml
     """
-
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd_to_execute)
     service_xml_file = ssh_stdout.read()
     return service_xml_file
@@ -107,5 +106,4 @@ def patch_firewall_xml_with_vnc_rule(service_xml_file):
 
     </ConfigRoot>
     """
-
     return service_xml_file.replace('</ConfigRoot>', new_firewall_rule)
