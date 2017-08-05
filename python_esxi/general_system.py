@@ -15,8 +15,11 @@ def set_advanced_configs(service_instance):
     host = host_view.view[0]
     option_manager = host.configManager.advancedOption
 
-    option = vim.option.OptionValue(key = "Net.GuestIPHack", value=long(1))
-    option_manager.UpdateOptions(changedValue=[option])
+    if option_manager.QueryOptions("Net.GuestIPHack")[0].value != 1:
+        option = vim.option.OptionValue(key = "Net.GuestIPHack", value=long(1))
+        option_manager.UpdateOptions(changedValue=[option])
+    else:
+        print( u'\u2714' + " Net.GuestIPHack already set to 1" )
 
 
 def list_license_info(my_cluster):
