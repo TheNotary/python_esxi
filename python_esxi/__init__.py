@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-API DOCS  https://github.com/vmware/pyvmomi/tree/master/docs
+API DOCS: https://github.com/vmware/pyvmomi/tree/master/docs
+SAMPLES: https://github.com/vmware/pyvmomi-community-samples/tree/master/samples
 """
 
 import pdb
@@ -35,6 +36,7 @@ def main():
 
     # list_datastores(my_cluster)
 
+    general_system.count_datastores(my_cluster)
 
     # FINISHED:
     # create_users(my_cluster)

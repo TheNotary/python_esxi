@@ -2,13 +2,12 @@
 
 import pyVim
 from pyVmomi import vim
-
+import pdb
 
 def set_advanced_configs(service_instance):
     """
     Sets advanced configs like hostname, etc.
     """
-
     content = service_instance.RetrieveContent()
 
     host_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.HostSystem], True)
@@ -16,7 +15,6 @@ def set_advanced_configs(service_instance):
     host = host_view.view[0]
     option_manager = host.configManager.advancedOption
 
-    # pdb.set_trace()
     option = vim.option.OptionValue(key = "Net.GuestIPHack", value=long(1))
     option_manager.UpdateOptions(changedValue=[option])
 
@@ -33,11 +31,28 @@ def list_license_info(my_cluster):
         return True
 
 
+def count_datastores(my_cluster):
+    content = my_cluster.RetrieveContent()
+    host_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.HostSystem], True)
+    host = host_view.view[0]
+    storage_system = host.configManager.storageSystem
+
+    count = []
+    for storage_thing in storage_system.fileSystemVolumeInfo.mountInfo:
+        volume = storage_thing.volume
+        if volume.type == 'VMFS':
+            count.append(volume.name)
+
+    if len(count) == 0:
+        print("WARN:  No Datastores found.  You'll need to plug some in and add them manually still.")
+    else:
+        print( u'\u2714' + " Detected {} datastore(s): {}".format(len(count), count) )
+
+
 def print_uptime(my_cluster):
     content = my_cluster.RetrieveContent()
     host_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.HostSystem], True)
 
-    # host_view.view[0]
     for host in host_view.view:
         seconds = host.RetrieveHardwareUptime()
         print("Uptime: {} hours".format(seconds/60.0/60.0) )
