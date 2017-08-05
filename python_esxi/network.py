@@ -11,22 +11,94 @@ esxi_vsphere_server, esxi_user, esxi_pass = lookup_env_variables()
 
 def bootstrap_esxi_network_configs(my_cluster):
     content = my_cluster.RetrieveContent()
-
-    hosts = vm_util.GetVMHosts(content)
-    hostSwitchesDict = vm_util.GetHostsSwitches(hosts)
-
     install_firewall_rule()
-
-    vswitch = create_vswitch()
-    add_portgroups(vswitch)
+    create_vswitch(content)
 
 
-def create_vswitch():
-    print("I'm a stub")
+def get_unassigned_pnic(content):
+    hosts = vm_util.GetVMHosts(content)
+    for host in hosts:
+        ns = host.configManager.networkSystem
+
+        # check if the physical_nic is bound to a vswitch
+        for physical_nic in ns.networkConfig.pnic:
+            for switch in host.config.network.vswitch:
+                if is_pnic_free(host, physical_nic):
+                    return physical_nic.device
+    return None
 
 
-def add_portgroups(vswitch):
-    print("I'm a stub")
+def is_pnic_free(host, target_physical_nic):
+    for vswitch in host.config.network.vswitch:
+        pnics_used_by_vswitch = vswitch.spec.policy.nicTeaming.nicOrder.activeNic
+        for pnic in pnics_used_by_vswitch:
+            if pnic == target_physical_nic.device:
+                return False
+
+    return True
+
+
+def create_vswitch(content):
+    """
+    This function will create a second Virtual Switch which allows me to have
+    an isolated network for VMs that I don't want exposed to the internet.
+    """
+    hosts = vm_util.GetVMHosts(content)
+
+    for host in hosts:
+        switches = host.config.network.vswitch
+        found_switch = does_switch1_already_exist(switches)
+
+        if found_switch:
+            print( u'\u2714' + " vSwitch1 already exists." )
+            return found_switch
+        else:
+            pnic = get_unassigned_pnic(content)
+            if pnic:
+                print( "Creating vSwitch1 for host {}... Using pnic {}".format(host, pnic) )
+                add_vswitch_to_host(host, "vSwitch1", pnic)
+                add_portgroup_to_vswitch(host, "vSwitch1", "VM Network 2 Dark", 0)
+            else:
+                print( "WARN: Tried to find a free Physical NIC that wasn't already associated with a vSwitch and couldn't!")
+
+
+def add_portgroup_to_vswitch(host, vswitchName, portgroupName, vlanId):
+    portgroup_spec = vim.host.PortGroup.Specification(
+        vswitchName = vswitchName,
+        name = portgroupName,
+        vlanId = int(vlanId),
+        policy = vim.host.NetworkPolicy(
+            security = vim.host.NetworkPolicy.SecurityPolicy(
+                allowPromiscuous = False,
+                macChanges = False,
+                forgedTransmits = False
+            )
+        )
+    )
+    host.configManager.networkSystem.AddPortGroup(portgroup_spec)
+
+
+def add_vswitch_to_host(host, vswitchName, nic_name):
+    vswitch_spec = vim.host.VirtualSwitch.Specification(
+        numPorts = 1024,
+        mtu = 1450,
+        bridge = vim.host.VirtualSwitch.BondBridge(
+            nicDevice = [nic_name]
+        )
+    )
+    host.configManager.networkSystem.AddVirtualSwitch(vswitchName, vswitch_spec)
+
+
+def does_switch1_already_exist(switches):
+    """
+    Checks to see if vSwitch1 has already been created.  Only vSwitch0 is created
+    at the start.
+    """
+    named_switch_already_created = False
+    for switch in switches:
+        if switch.name == "vSwitch1":
+            named_switch_already_created = switch
+    return named_switch_already_created
 
 
 def install_firewall_rule():

@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""
+API DOCS  https://github.com/vmware/pyvmomi/tree/master/docs
+"""
 
 import pdb
 import os
@@ -32,10 +35,11 @@ def main():
 
     # create_users(my_cluster)
     # list_users(my_cluster)
+    # list_datastores(my_cluster)
 
-    bootstrap_esxi_network_configs(my_cluster)
 
     # FINISHED:
+    # bootstrap_esxi_network_configs(my_cluster)
     # general_system.set_advanced_configs(my_cluster)
     # general_system.check_for_ssh(esxi_vsphere_server)
     # general_system.list_license_info(my_cluster)
