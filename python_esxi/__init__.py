@@ -33,18 +33,19 @@ def main():
     my_cluster = vm_util.connect()
     # pdb.set_trace()
 
-    # create_users(my_cluster)
-    # list_users(my_cluster)
     # list_datastores(my_cluster)
 
 
     # FINISHED:
+    # create_users(my_cluster)
     # bootstrap_esxi_network_configs(my_cluster)
     # general_system.set_advanced_configs(my_cluster)
     # general_system.check_for_ssh(esxi_vsphere_server)
     # general_system.list_license_info(my_cluster)
     # general_system.print_uptime(my_cluster)
 
+    # Unwanted Ones:
+    # list_users(my_cluster)
     # list_vswitch_info(my_cluster)
     # list_vms(my_cluster)
 

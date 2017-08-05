@@ -6,7 +6,7 @@ from pyVmomi import vim
 
 def create_users(my_cluster):
     if api_user_exists(my_cluster):
-        print("API user already exists, skipping user creation.")
+        print(u'\u2714' + " API user already exists.")
         return
 
     ud = my_cluster.RetrieveContent().userDirectory
