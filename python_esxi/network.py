@@ -104,7 +104,13 @@ def does_switch1_already_exist(switches):
 def install_firewall_rule():
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(esxi_vsphere_server, username='root', password=esxi_pass, allow_agent=False)
+
+    try:
+        ssh.connect(esxi_vsphere_server, username='root', password=esxi_pass, allow_agent=False)
+    except paramiko.ssh_exception.NoValidConnectionsError, e:
+        print("FAIL:  Could not establish SSH connection. Can't install VNC firewall rules.")
+        print(e)
+        return False
 
     service_xml_file = get_firewall_xml_from_server(ssh)
 

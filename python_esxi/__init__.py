@@ -36,9 +36,9 @@ def main():
 
     # FINISHED:
     create_users(my_cluster)
+    general_system.check_for_ssh(esxi_vsphere_server)
     bootstrap_esxi_network_configs(my_cluster)
     general_system.set_advanced_configs(my_cluster)
-    general_system.check_for_ssh(esxi_vsphere_server)
     general_system.list_license_info(my_cluster)
     general_system.count_datastores(my_cluster)
     print("")
