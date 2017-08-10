@@ -115,21 +115,20 @@ def install_firewall_rule():
         print(e)
         return False
 
-
     # hack the local.sh file if it hasn't been hacked yet
     local_sh_file = get_local_sh_from_server(ssh)
     if local_sh_file_is_missing_hacks(local_sh_file):
         print("Updating /etc/rc.local.d/local.sh to include a command to install a VNC firewall rule...")
-        patched_sh_file = patch_local_sh_with_vnc_firewall_dropper(local_sh_file)
+        patched_sh_file = patch_local_sh_with_vnc_firewall_dropper_and_exec(ssh, local_sh_file)
         upload_local_sh_to_server(patched_sh_file)
-        reload_firewall_configs()
+        reload_firewall_configs(ssh)
     else:
-        print(u'\u2714' + " local.sh alread patched to load VNC rules on reboot.")
+        print(u'\u2714' + " local.sh already patched to load VNC rules on reboot.")
 
     ssh.close()
 
 
-def reload_firewall_configs():
+def reload_firewall_configs(ssh):
     cmd_to_execute = """
     esxcli network firewall refresh
     """
@@ -145,7 +144,7 @@ def upload_local_sh_to_server(patched_sh_file):
     with open(tmp_file_path, "w") as f:
         f.write(patched_sh_file)
 
-    sftp.put(tmp_file_path, "/etc/rc.local.d/local.rc")
+    sftp.put(tmp_file_path, "/etc/rc.local.d/local.sh")
 
 
 def local_sh_file_is_missing_hacks(local_sh_file):
@@ -156,14 +155,14 @@ def local_sh_file_is_missing_hacks(local_sh_file):
         return False
 
 
-def patch_local_sh_with_vnc_firewall_dropper(local_sh_file):
+def patch_local_sh_with_vnc_firewall_dropper_and_exec(ssh, local_sh_file):
     packer_vnc_dropper_code = """
 %s
 firewall_rule="
 <ConfigRoot>
-    <service id="1000">
+    <service id='1000'>
       <id>packer-vnc</id>
-      <rule id="0000">
+      <rule id='0000'>
         <direction>inbound</direction>
         <protocol>tcp</protocol>
         <porttype>dst</porttype>
@@ -178,16 +177,18 @@ firewall_rule="
 </ConfigRoot>
 "
 echo "${firewall_rule}" > /etc/vmware/firewall/packer-vnc.xml
+esxcli network firewall refresh
 
-exit 0
-    """ % (verification_signature_for_local_sh_packer_vnc)
+exit 0""" % (verification_signature_for_local_sh_packer_vnc)
 
-    service_xml_file = service_xml_file.replace('exit 0', packer_vnc_dropper_code)
-    return service_xml_file
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(packer_vnc_dropper_code)
+
+    local_sh_file = local_sh_file.replace("exit 0", packer_vnc_dropper_code)
+    return local_sh_file
 
 
 def local_sh_cmd_missing(local_sh_file):
-    if service_xml_file.find("packer_vnc") == -1:
+    if local_sh_file.find("packer_vnc") == -1:
         return True
     else:
         return False
