@@ -72,6 +72,6 @@ def check_for_ssh(esxi_vsphere_server):
         return True
     except socket.error as e:
         print( "Connection on port 22 to {} failed {}".format(esxi_vsphere_server, e) )
-        print("WARNING:\nWARNING:  You'll need to login to the ESXi server, right click the Host -> Services -> Enable Secure Shell\nWARNING:")
+        print("WARNING:\nWARNING:  You'll need to login to the ESXi server, Under 'Host' click Manage -> Services -> TSM-SSH -> Start and Stop with Host\nWARNING:")
         s.close()
         return False

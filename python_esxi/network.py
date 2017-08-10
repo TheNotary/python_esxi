@@ -9,6 +9,9 @@ from config_helper import lookup_env_variables
 esxi_vsphere_server, esxi_user, esxi_pass = lookup_env_variables()
 
 
+verification_signature_for_local_sh_packer_vnc = "# Installer for packer-vnc firewall rule"
+
+
 def bootstrap_esxi_network_configs(my_cluster):
     content = my_cluster.RetrieveContent()
     install_firewall_rule()
@@ -112,8 +115,20 @@ def install_firewall_rule():
         print(e)
         return False
 
-    service_xml_file = get_firewall_xml_from_server(ssh)
 
+    # hack the local.sh file if it hasn't been hacked yet
+    local_sh_file = get_local_sh_from_server(ssh)
+    if local_sh_file_is_missing_hacks(local_sh_file):
+        print("Updating /etc/rc.local.d/local.sh to include a command to install a VNC firewall rule...")
+        patched_sh_file = patch_local_sh_with_vnc_firewall_dropper(local_sh_file)
+        upload_local_sh_to_server(patched_sh_file)
+    else:
+        print(u'\u2714' + " local.sh alread patched to load VNC rules on reboot.")
+
+
+    # Manually reload the firewall configurations unless they already have the
+    # vnc allowance rule
+    service_xml_file = get_firewall_xml_from_server(ssh)
     if vnc_firewall_rule_missing(service_xml_file):
         print("Installing firewall for VNC connections...")
         service_xml_file = patch_firewall_xml_with_vnc_rule(service_xml_file)
@@ -123,6 +138,63 @@ def install_firewall_rule():
         print(u'\u2714' + " Firewall rule for VNC already installed.")
 
     ssh.close()
+
+
+def upload_local_sh_to_server(patched_sh_file):
+    t = paramiko.Transport((esxi_vsphere_server, 22))
+    t.connect(username='root',password=esxi_pass)
+    sftp = paramiko.SFTPClient.from_transport(t)
+
+    tmp_file_path = "/tmp/temp_python_esxi_local_sh_file"
+    with open(tmp_file_path, "w") as f:
+        f.write(patched_sh_file)
+
+    sftp.put(tmp_file_path, "/etc/rc.local.d/local.rc")
+
+
+def local_sh_file_is_missing_hacks(local_sh_file):
+    # Check to see if dropper rule already exists
+    if local_sh_file.find(verification_signature_for_local_sh_packer_vnc) == -1:
+        return True
+    else:
+        return False
+
+
+def patch_local_sh_with_vnc_firewall_dropper(local_sh_file):
+    packer_vnc_dropper_code = """
+%s
+firewall_rule="
+<ConfigRoot>
+    <service id="1000">
+      <id>packer-vnc</id>
+      <rule id="0000">
+        <direction>inbound</direction>
+        <protocol>tcp</protocol>
+        <porttype>dst</porttype>
+        <port>
+          <begin>5900</begin>
+          <end>6000</end>
+        </port>
+      </rule>
+      <enabled>true</enabled>
+      <required>true</required>
+    </service>
+</ConfigRoot>
+"
+echo "${firewall_rule}" > /etc/vmware/firewall/packer-vnc.xml
+
+exit 0
+    """ % (verification_signature_for_local_sh_packer_vnc)
+
+    service_xml_file = service_xml_file.replace('exit 0', packer_vnc_dropper_code)
+    return service_xml_file
+
+
+def local_sh_cmd_missing(local_sh_file):
+    if service_xml_file.find("packer_vnc") == -1:
+        return True
+    else:
+        return False
 
 
 def vnc_firewall_rule_missing(service_xml_file):
@@ -163,6 +235,27 @@ def get_firewall_xml_from_server(ssh):
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd_to_execute)
     service_xml_file = ssh_stdout.read()
     return service_xml_file
+
+
+def get_local_sh_from_server(ssh):
+    """
+    The /etc/rc.local.d/local.sh file represents one of the few files to which
+    persistent changes can be made.  It also represents a startup script that
+    runs everytime your system boots up.  Because firewall rule changes are
+    wiped out upon reboot, they must be reapplied through this script.
+    """
+
+    cmd_to_execute = """
+        cat /etc/rc.local.d/local.sh
+    """
+
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd_to_execute)
+    local_sh_file = ssh_stdout.read()
+    return local_sh_file
+
+
+
+
 
 
 def patch_firewall_xml_with_vnc_rule(service_xml_file):
