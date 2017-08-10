@@ -122,22 +122,18 @@ def install_firewall_rule():
         print("Updating /etc/rc.local.d/local.sh to include a command to install a VNC firewall rule...")
         patched_sh_file = patch_local_sh_with_vnc_firewall_dropper(local_sh_file)
         upload_local_sh_to_server(patched_sh_file)
+        reload_firewall_configs()
     else:
         print(u'\u2714' + " local.sh alread patched to load VNC rules on reboot.")
 
-
-    # Manually reload the firewall configurations unless they already have the
-    # vnc allowance rule
-    service_xml_file = get_firewall_xml_from_server(ssh)
-    if vnc_firewall_rule_missing(service_xml_file):
-        print("Installing firewall for VNC connections...")
-        service_xml_file = patch_firewall_xml_with_vnc_rule(service_xml_file)
-        upload_firewall_xml_to_server(service_xml_file)
-        swap_in_new_firewall_file(ssh)
-    else:
-        print(u'\u2714' + " Firewall rule for VNC already installed.")
-
     ssh.close()
+
+
+def reload_firewall_configs():
+    cmd_to_execute = """
+    esxcli network firewall refresh
+    """
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd_to_execute)
 
 
 def upload_local_sh_to_server(patched_sh_file):
@@ -197,46 +193,6 @@ def local_sh_cmd_missing(local_sh_file):
         return False
 
 
-def vnc_firewall_rule_missing(service_xml_file):
-    if service_xml_file.find("packer-vnc") == -1:
-        return True
-    else:
-        return False
-
-
-def upload_firewall_xml_to_server(service_xml_file):
-    t = paramiko.Transport((esxi_vsphere_server, 22))
-    t.connect(username='root',password=esxi_pass)
-    sftp = paramiko.SFTPClient.from_transport(t)
-
-    tmp_file_path = "/tmp/temp_python_esxi_firewall_file"
-    with open(tmp_file_path, "w") as f:
-        f.write(service_xml_file)
-
-    sftp.put(tmp_file_path, "/etc/vmware/firewall/service.xml.new")
-
-
-def swap_in_new_firewall_file(ssh):
-    cmd_to_execute = """
-    chmod 644 /etc/vmware/firewall/service.xml && \
-        chmod +t /etc/vmware/firewall/service.xml && \
-        mv /etc/vmware/firewall/service.xml /etc/vmware/firewall/service.xml.bk && \
-        mv /etc/vmware/firewall/service.xml.new /etc/vmware/firewall/service.xml && \
-        chmod 444 /etc/vmware/firewall/service.xml && \
-        esxcli network firewall refresh
-    """
-    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd_to_execute)
-
-
-def get_firewall_xml_from_server(ssh):
-    cmd_to_execute = """
-        cat /etc/vmware/firewall/service.xml
-    """
-    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd_to_execute)
-    service_xml_file = ssh_stdout.read()
-    return service_xml_file
-
-
 def get_local_sh_from_server(ssh):
     """
     The /etc/rc.local.d/local.sh file represents one of the few files to which
@@ -252,29 +208,3 @@ def get_local_sh_from_server(ssh):
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd_to_execute)
     local_sh_file = ssh_stdout.read()
     return local_sh_file
-
-
-
-
-
-
-def patch_firewall_xml_with_vnc_rule(service_xml_file):
-    new_firewall_rule = """
-        <service id="1000">
-          <id>packer-vnc</id>
-          <rule id="0000">
-            <direction>inbound</direction>
-            <protocol>tcp</protocol>
-            <porttype>dst</porttype>
-            <port>
-              <begin>5900</begin>
-              <end>6000</end>
-            </port>
-          </rule>
-          <enabled>true</enabled>
-          <required>true</required>
-        </service>
-
-    </ConfigRoot>
-    """
-    return service_xml_file.replace('</ConfigRoot>', new_firewall_rule)
