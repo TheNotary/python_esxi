@@ -52,7 +52,9 @@ def main():
     vm_util.disconnect(my_cluster)
 
 
-def list_vms(my_cluster):
+def list_vms(my_cluster = None):
+    if my_cluster == None:
+        my_cluster = vm_util.connect()
 
     content = my_cluster.RetrieveContent()
     for child in content.rootFolder.childEntity:

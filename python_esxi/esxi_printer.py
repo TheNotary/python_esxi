@@ -28,13 +28,15 @@ def PrintVmInfo(vm, depth=1):
         return
 
     summary = vm.summary
-    print("Name: {}".format(summary.config.name))
-    print("  Path: {}".format(summary.config.vmPathName))
-    print("  Guest: {}".format(summary.config.guestFullName))
+    state = "online" if summary.runtime.powerState == "poweredOn" else "off"
+    print("\033[92m{}\033[0m - {}".format(summary.config.name, state))
+    # print("  Path: {}".format(summary.config.vmPathName))
+    # print("  Guest: {}".format(summary.config.guestFullName))
     annotation = summary.config.annotation
     if annotation != None and annotation != "":
         print("Annotation : {}".format(annotation))
-    print("  State: {}".format(summary.runtime.powerState))
+    # print("  State: {}".format(summary.runtime.powerState))
+    print("  Creation: {}".format(summary.runtime.bootTime.strftime("%Y-%m-%d")) )
     if summary.guest != None:
         ip = summary.guest.ipAddress
         if ip != None and ip != "":
